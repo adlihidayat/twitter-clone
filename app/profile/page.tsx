@@ -9,7 +9,7 @@ import { onSnapshot, collection, query, orderBy } from "firebase/firestore";
 import { db } from "../api/config";
 import FeedItem from "../_components/feedItem";
 
-function pages() {
+function Pages() {
   const { data: session } = useSession();
   const [tweet, setTweet] = useState<any[]>([]);
 
@@ -79,4 +79,4 @@ function pages() {
   );
 }
 
-export default pages;
+export default Pages;
