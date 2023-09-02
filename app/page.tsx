@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Feed from "./_components/feed";
 import Widget from "./_components/widget";
 

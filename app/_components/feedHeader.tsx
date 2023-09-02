@@ -1,16 +1,47 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import Image from "next/image";
+import { signOut } from "next-auth/react";
 
-type props = {
-  feedType: string;
-  setFeedType: React.Dispatch<React.SetStateAction<string>>;
-};
+function FeedHeader({ session }: any) {
+  const [feedType, setFeedType] = useState("for-you");
+  const [isUseractive, setisUseractive] = useState(false);
 
-function FeedHeader({ feedType, setFeedType }: props) {
+  const viewAccSet = (e: any) => {
+    e.preventDefault();
+    setisUseractive(!isUseractive);
+  };
+
   return (
     <header className="feed-nav">
       <div className=" w-[100%] h-[70px]  flex items-center justify-center relative">
-        <div className=" w-8 h-8 bg-slate-200 rounded-full absolute left-5"></div>
+        <div className=" w-8 h-8 rounded-full absolute left-5 sm:hidden">
+          <a href="" onClick={viewAccSet}>
+            <Image
+              src={session?.user?.image}
+              alt=""
+              width={100}
+              height={100}
+              className=" rounded-full"
+            />
+          </a>
+          {isUseractive && (
+            <div className="z-50 absolute top-12 font-semibold drop-shadow-[0_0px_10px_rgba(255,255,255,0.25)]">
+              <button
+                onClick={(e: any) => e.preventDefault()}
+                className=" rounded-t-xl duration-300 w-32 py-3 text-sm sm:text-lg  text-gray-100  bg-black "
+              >
+                View Profile
+              </button>
+              <button
+                onClick={() => signOut()}
+                className=" rounded-b-xl duration-300  w-32 py-3 text-sm sm:text-lg  text-red-500  bg-black "
+              >
+                LogOut
+              </button>
+            </div>
+          )}
+        </div>
         <div className=" w-7 h-7 relative">
           <Image src={"/icon/icon.svg"} fill alt="" />
         </div>

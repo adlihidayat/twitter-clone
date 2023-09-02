@@ -1,27 +1,33 @@
+"use client";
 import Image from "next/image";
 import React, { useState, useRef } from "react";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import { AiOutlineClose } from "react-icons/ai";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { db } from "../api/config";
 
-type props = {
-  setTweet: any;
-};
-
-function Tweet({ setTweet }: props) {
+const Tweet = ({ session }: any) => {
   const [tweetText, setTweetText] = useState("");
   const [emojiActive, setEmojiActive] = useState(false);
   const [tweetImg, setTweetImg] = useState("");
 
   const inputImg = useRef<HTMLInputElement>(null);
 
-  const post = () => {
-    setTweet({
-      text: tweetText,
-      img: tweetImg,
-      like: 0,
-      comment: 0,
-    });
+  const post = async () => {
+    try {
+      await addDoc(collection(db, "tweet"), {
+        name: session?.user?.name,
+        username: session?.user?.email,
+        text: tweetText,
+        img: session?.user?.image,
+        like: 0,
+        comment: 0,
+        timestamp: Timestamp.now(),
+      });
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
     setTweetText("");
     setTweetImg("");
   };
@@ -47,7 +53,15 @@ function Tweet({ setTweet }: props) {
 
   return (
     <form className="hidden w-[100%] mt-28 border-b border-gray-500 sm:flex p-5">
-      <div className=" w-12 h-12 bg-slate-200 rounded-full mr-5"></div>
+      <div className=" w-12 h-12 bg-slate-200 rounded-full mr-5">
+        <Image
+          src={session?.user?.image}
+          alt=""
+          width={100}
+          height={100}
+          className=" rounded-full"
+        />
+      </div>
       <div className=" flex-1 bg-slte-100">
         <div className="flex flex-col items-start space-y-5 border-b border-gray-500 pb-5">
           <button
@@ -138,9 +152,10 @@ function Tweet({ setTweet }: props) {
             </button>
           </div>
           <button
+            disabled={tweetText === "" && tweetImg === ""}
             type="button"
             onClick={post}
-            className=" bg-[#3986f9] hover:bg-[#226ad7] duration-300 px-5 py-2 rounded-full font-bold"
+            className=" bg-[#3986f9] hover:bg-[#226ad7] duration-300 px-5 py-2 rounded-full font-bold disabled:opacity-50"
           >
             Post
           </button>
@@ -148,6 +163,6 @@ function Tweet({ setTweet }: props) {
       </div>
     </form>
   );
-}
+};
 
 export default Tweet;

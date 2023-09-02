@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import {
   AiTwotoneLike,
@@ -5,10 +6,30 @@ import {
   AiOutlineComment,
   AiOutlineEllipsis,
 } from "react-icons/ai";
+import { Timestamp } from "firebase/firestore";
+import Image from "next/image";
 
 function FeedItem({ tweet }: any) {
   const [like, setLike] = useState(false);
   const [viewMore, setViewMore] = useState(false);
+  const timePosted = Timestamp.now().seconds - tweet.timestamp.seconds;
+  let time = { unit: "s", show: 0 };
+
+  if (Math.round(timePosted) < 60) {
+    time.show = Math.round(timePosted);
+    time.unit = "s";
+  } else if (Math.round(timePosted) < 3600) {
+    time.show = Math.round(timePosted / 60);
+    time.unit = "m";
+  } else if (Math.round(timePosted) < 86400) {
+    time.show = Math.round(timePosted / 3600);
+    time.unit = "h";
+  } else {
+    time.show = Math.round(timePosted / 86400);
+    time.unit = "d";
+  }
+
+  // console.log(tweet);
 
   return (
     <div className=" border-y border-gray-500 w-[100%] flex space-x-3 sm:space-x-4 p-6 pr-3 relative">
@@ -22,21 +43,39 @@ function FeedItem({ tweet }: any) {
           </button>
         </div>
       )}
-      <div className="w-10 h-10 bg-slate-400 rounded-full"></div>
-      <div className="h-[100%] flex-1 bg-slate-70 pr-5 flex flex-col space-y-3">
+      <div className="w-10 h-10 bg-slate-400 rounded-full">
+        <Image
+          src={tweet?.img}
+          alt=""
+          width={100}
+          height={100}
+          className=" rounded-full"
+        />
+      </div>
+      <div className="h-[100%] flex-1 bg-slate-70 pr-5 flex flex-col space-y-3 max-w-[70%]">
         <div className=" flex items-center justify-between">
-          <div className="flex space-x-2 items-center">
-            <h3 className=" font-bold">you</h3>
-            <h3 className=" font-thin text-gray-500 ">@urUsername</h3>
+          <div className="flex space-x-2 items-center sm:justify-between text-sm ">
+            <h3 className=" font-bold text-base truncate max-w-[25%] md:max-w-[45%]">
+              {tweet.name}
+            </h3>
+            <h3 className=" font-thin text-gray-500 truncate max-w-[20%] md:max-w-[45%]">
+              @{tweet.name}
+            </h3>
+            <h3 className="text-gray-500 font-bold text-xl ">&#183;</h3>
+            <h3 className=" font-thin text-gray-500 ">
+              {time.show} {time.unit}
+            </h3>
           </div>
           <button
             className=" hover:bg-[#23246690] rounded-full"
             onClick={() => setViewMore(true)}
           >
-            <AiOutlineEllipsis className="w-6 sm:w-7 h-6 sm:h-7 fill-white hover:fill-blue-500 duration-300" />
+            <AiOutlineEllipsis className="w-6 sm:w-7 h-6 sm:h-7 fill-[#919191] hover:fill-blue-500 duration-300" />
           </button>
         </div>
-        <span className=" break-all max-w-[550px]">{tweet.text}</span>
+        <span className=" break-all max-w-[550px] text-[#dcdcdc]">
+          {tweet.text}
+        </span>
         <div className=" flex w-[100%] space-x-10 sm:space-x-14">
           <button
             className="group flex space-x-2 sm:space-x-4 items-center"
@@ -45,11 +84,13 @@ function FeedItem({ tweet }: any) {
             {like ? (
               <AiTwotoneLike className="w-4 sm:w-5 h-4 sm:h-5 fill-red-500" />
             ) : (
-              <AiOutlineLike className="w-4 sm:w-5 h-4 sm:h-5 fill-white group-hover:fill-red-500   duration-300" />
+              <AiOutlineLike className="w-4 sm:w-5 h-4 sm:h-5 fill-[#919191] group-hover:fill-red-500   duration-300" />
             )}
             <span
               className={`text-sm sm:text-base ${
-                like ? "text-red-500" : "text-white group-hover:text-red-500"
+                like
+                  ? "text-red-500"
+                  : "text-[#919191] group-hover:text-red-500"
               } duration-300`}
             >
               {like ? tweet.like + 1 : tweet.like}
@@ -59,8 +100,8 @@ function FeedItem({ tweet }: any) {
             className="group flex space-x-2 sm:space-x-4 items-center"
             onClick={() => tweet.comment + 1}
           >
-            <AiOutlineComment className="w-4 sm:w-5 h-4 sm:h-5 fill-white group-hover:fill-blue-500 duration-300" />
-            <span className=" text-sm sm:text-base text-white group-hover:text-blue-500  duration-300">
+            <AiOutlineComment className="w-4 sm:w-5 h-4 sm:h-5 fill-[#919191] group-hover:fill-blue-500 duration-300" />
+            <span className=" text-sm sm:text-base text-[#919191] group-hover:text-blue-500  duration-300">
               {tweet.comment}
             </span>
           </button>

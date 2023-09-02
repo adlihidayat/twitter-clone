@@ -1,16 +1,34 @@
 "use client";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import React, { useState } from "react";
+import { AiOutlineUser } from "react-icons/ai";
+import { signOut } from "next-auth/react";
+import Link from "next/link";
 
 function Nav() {
   const [active, setActive] = useState("home");
+  const [isUseractive, setIsUserActive] = useState(false);
+  const { data: session } = useSession();
+
+  const showProfile = () => {
+    setIsUserActive(false);
+  };
+  const logOut = () => {
+    signOut();
+    setIsUserActive(false);
+  };
+
   return (
     <nav className="nav">
       <div className="w-[100%] h-20 sm:h-[500px] sm:w-20 flex sm:flex-col items-center justify-evenly sm:pr-5">
-        <div className="hidden sm:block hover:bg-gray-800 w-12 h-12 p-3 rounded-full cursor-pointer">
+        <Link
+          href="/"
+          className="hidden sm:block hover:bg-gray-800 w-12 h-12 p-3 rounded-full cursor-pointer"
+        >
           <Image src={`/icon/icon.svg`} alt="" width={100} height={100} />
-        </div>
-        <button className="nav-icon">
+        </Link>
+        <Link href="/" className="nav-icon">
           <Image
             src={`/nav/${active === "home" ? "on" : "off"}/home.svg`}
             onClick={() => setActive("home")}
@@ -18,7 +36,7 @@ function Nav() {
             width={100}
             height={100}
           />
-        </button>
+        </Link>
         <button className="nav-icon">
           <Image
             src={`/nav/${active === "search" ? "on" : "off"}/search.svg`}
@@ -65,9 +83,44 @@ function Nav() {
           />
         </a>
       </div>
-      <a className="w-7 h-7 duration-300 sm:w-14 sm:h-14 sm:p-3 sm:mb-10 sm:rounded-full hidden sm:block bg-slate-200">
-        {/* <Image src={`/nav/tweet.svg`} alt="" width={100} height={100} /> */}
-      </a>
+      <div className=" relative">
+        {!session ? (
+          <AiOutlineUser className=" fill-black" />
+        ) : (
+          <>
+            <a
+              onClick={() => setIsUserActive(!isUseractive)}
+              className=" cursor-pointer w-7 h-7 duration-300 sm:w-14 sm:h-14  sm:mb-10 sm:rounded-full hidden sm:block bg-[#E7E9EA]"
+            >
+              <Image
+                src={session?.user?.image!}
+                alt=""
+                width={100}
+                height={100}
+                className=" rounded-full"
+              />
+            </a>
+            {isUseractive && (
+              <div className="w-40 absolute -top-9 left-20 drop-shadow-[0_0px_10px_rgba(255,255,255,0.25)]">
+                <Link href={"/profile"}>
+                  <button
+                    onClick={showProfile}
+                    className="w-[100%] rounded-t-xl duration-300 py-2 text-lg hover:text-[#caccce] bg-black hover:bg-[#101010]"
+                  >
+                    Show Profile
+                  </button>
+                </Link>
+                <button
+                  onClick={logOut}
+                  className=" rounded-b-xl duration-300 w-40 py-2 text-lg  text-red-500 hover:text-red-400 bg-black hover:bg-[#101010]"
+                >
+                  LogOut
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </nav>
   );
 }

@@ -1,35 +1,37 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Foryou from "./foryou";
 import Tweet from "./tweet";
 import FeedHeader from "./feedHeader";
+import Login from "./login";
+import { useSession } from "next-auth/react";
 
-function Feed() {
-  const a: string[] = ["a", "b"];
-  const [feedType, setFeedType] = useState("following");
-  const [tweet, setTweet] = useState({
-    text: "",
-    img: "",
-    like: 0,
-    comment: 0,
-  });
-  const [tweetList, setTweetList] = useState<
-    { text: string; img: string; like: number; comment: number }[]
-  >([]);
-
-  useEffect(() => {
-    (tweet.text !== "" || tweet.img !== "") &&
-      setTweetList([...tweetList, tweet]);
-  }, [tweet]);
+const Feed = ({ Component, pageProps }: any) => {
+  const { data: session } = useSession();
+  // console.log(session);
 
   return (
     <section className="xl:mr-96 w-[100%] sm:w-[80vw]  max-w-2xl relative sm:border-r-[1px] border-[#e7e9ea70]">
-      <FeedHeader setFeedType={setFeedType} feedType={feedType} />
-      <Tweet setTweet={setTweet} />
-      <Foryou tweetList={tweetList} />
+      {!session ? (
+        <Login />
+      ) : (
+        <>
+          <FeedHeader session={session} />
+          <Tweet session={session} />
+          <Foryou />
+        </>
+      )}
+      {/* {isLogin ? (
+        <>
+          <FeedHeader setFeedType={setFeedType} feedType={feedType} />
+          <Tweet />
+          <Foryou tweetList={tweet} />
+        </>
+      ) : (
+        <Login />
+      )} */}
     </section>
   );
-}
+};
 
 export default Feed;

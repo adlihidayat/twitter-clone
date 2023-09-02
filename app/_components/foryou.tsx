@@ -1,22 +1,27 @@
-import React from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 import FeedItem from "./feedItem";
+import { onSnapshot, collection, query, orderBy } from "firebase/firestore";
+import { db } from "../api/config";
 
-type props = {
-  item: Object;
-  index: any;
-};
+function Foryou() {
+  const [tweet, setTweet] = useState<any[]>([]);
 
-const loop = (tweetList: any) => {
-  for (let i = 0; i < tweetList.length; i++) {
-    <p key={i}>{tweetList[i].text}</p>;
-  }
-};
+  useEffect(() => {
+    const q = query(collection(db, "tweet"), orderBy("timestamp", "desc"));
+    const readData = onSnapshot(q, (querySnapshot) => {
+      let arr: object[] = [];
+      querySnapshot.forEach((doc: any) => {
+        arr.push({ ...doc.data(), id: doc.id });
+      });
+      setTweet(arr);
+    });
+  }, []);
 
-function Foryou({ tweetList }: any) {
   return (
     <div className=" max-w-2xl bg-black flex flex-col items-center  mt-[110px] sm:mt-0 pb-20 sm:pb-0">
-      {tweetList.map((item: any) => (
-        <FeedItem key={tweetList.indexOf(item)} tweet={item} />
+      {tweet.map((item: any) => (
+        <FeedItem key={tweet.indexOf(item)} tweet={item} />
       ))}
     </div>
   );
