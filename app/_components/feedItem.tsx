@@ -8,11 +8,30 @@ import {
 } from "react-icons/ai";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db, storage } from "../api/config";
+import { ref, deleteObject } from "firebase/storage";
+import { useSession } from "next-auth/react";
 
 function FeedItem({ tweet }: any) {
   const [like, setLike] = useState(false);
   const [viewMore, setViewMore] = useState(false);
   const timePosted = Timestamp.now().seconds - tweet.timestamp.seconds;
+  const { data: session } = useSession();
+
+  const deleteDocument = async () => {
+    await deleteDoc(doc(db, "tweet", tweet.id));
+    const desertRef = ref(storage, `tweet/${tweet.tweetImg}`);
+    deleteObject(desertRef)
+      .then(() => {
+        console.log("success delet img");
+      })
+      .catch((error: any) => {
+        console.log("error delet img");
+      });
+    setViewMore(false);
+  };
+
   let time = { unit: "s", show: 0 };
 
   if (Math.round(timePosted) < 60) {
@@ -29,16 +48,11 @@ function FeedItem({ tweet }: any) {
     time.unit = "d";
   }
 
-  // console.log(tweet);
-
   return (
     <div className=" border-y border-gray-500 w-[100%] flex space-x-3 sm:space-x-4 p-6 pr-3 relative">
-      {viewMore && (
+      {viewMore && session?.user?.email === tweet?.username && (
         <div className=" font-bold absolute bg-black flex flex-col drop-shadow-[0_0px_10px_rgba(255,255,255,0.25)] right-5 rounded-xl">
-          <button className=" px-10 py-2" onClick={() => setViewMore(false)}>
-            Follow
-          </button>
-          <button className=" px-10 py-2" onClick={() => setViewMore(false)}>
+          <button className=" px-10 py-2 text-red-500" onClick={deleteDocument}>
             Delete
           </button>
         </div>
@@ -55,10 +69,10 @@ function FeedItem({ tweet }: any) {
       <div className="h-[100%] flex-1 bg-slate-70 pr-5 flex flex-col space-y-3 max-w-[70%]">
         <div className=" flex items-center justify-between">
           <div className="flex space-x-2 items-center sm:justify-between text-sm ">
-            <h3 className=" font-bold text-base truncate max-w-[25%] md:max-w-[45%]">
+            <h3 className=" font-bold text-base truncate max-w-[25%] sm:max-w-[45%]">
               {tweet.name}
             </h3>
-            <h3 className=" font-thin text-gray-500 truncate max-w-[20%] md:max-w-[45%]">
+            <h3 className=" font-thin text-gray-500 truncate max-w-[20%] sm:max-w-[45%]">
               @{tweet.name}
             </h3>
             <h3 className="text-gray-500 font-bold text-xl ">&#183;</h3>
@@ -68,7 +82,7 @@ function FeedItem({ tweet }: any) {
           </div>
           <button
             className=" hover:bg-[#23246690] rounded-full"
-            onClick={() => setViewMore(true)}
+            onClick={() => setViewMore(!viewMore)}
           >
             <AiOutlineEllipsis className="w-6 sm:w-7 h-6 sm:h-7 fill-[#919191] hover:fill-blue-500 duration-300" />
           </button>
@@ -76,6 +90,17 @@ function FeedItem({ tweet }: any) {
         <span className=" break-all max-w-[550px] text-[#dcdcdc]">
           {tweet.text}
         </span>
+        {tweet.imgTweet && (
+          <div className="w-60 h-60 bg-slate-00 relative">
+            <Image
+              src={tweet.imgTweet}
+              alt=""
+              fill
+              className=" rounded-xl relative"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
+        )}
         <div className=" flex w-[100%] space-x-10 sm:space-x-14">
           <button
             className="group flex space-x-2 sm:space-x-4 items-center"

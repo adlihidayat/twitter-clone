@@ -5,22 +5,31 @@ import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import { AiOutlineClose } from "react-icons/ai";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
-import { db } from "../api/config";
+import { db, storage } from "../api/config";
+import Link from "next/link";
+import {
+  uploadBytes,
+  getDownloadURL,
+  ref,
+  deleteObject,
+} from "firebase/storage";
 
-const Tweet = ({ session }: any) => {
+const Tweet = (session: any, setSubmit: any) => {
   const [tweetText, setTweetText] = useState("");
   const [emojiActive, setEmojiActive] = useState(false);
-  const [tweetImg, setTweetImg] = useState("");
-
+  const [tweetImg, setTweetImg] = useState<any>();
+  const [tweetImgUrl, setTweetImgUrl] = useState("");
+  const [tweetImgPreview, setTweetImgPreview] = useState<string>();
   const inputImg = useRef<HTMLInputElement>(null);
 
   const post = async () => {
     try {
       await addDoc(collection(db, "tweet"), {
-        name: session?.user?.name,
-        username: session?.user?.email,
+        name: session?.session?.user?.name,
+        username: session?.session?.user?.email,
         text: tweetText,
-        img: session?.user?.image,
+        img: session?.session?.user?.image,
+        imgTweet: tweetImgUrl,
         like: 0,
         comment: 0,
         timestamp: Timestamp.now(),
@@ -29,12 +38,22 @@ const Tweet = ({ session }: any) => {
       console.error("Error adding document: ", e);
     }
     setTweetText("");
-    setTweetImg("");
+    setTweetImgUrl("");
+    setTweetImgPreview("");
   };
 
+  // console.log(tweetImg.name);
   const onImageChange = (e: any) => {
     const [file] = e.target.files;
-    setTweetImg(URL.createObjectURL(file));
+    setTweetImg(e.target.files[0]);
+    setTweetImgPreview(URL.createObjectURL(file));
+    const imageRef = ref(storage, `tweet/${e.target.files[0].name}`);
+    uploadBytes(imageRef, e.target.files[0]).then((snapshot) => {
+      getDownloadURL(snapshot.ref).then((url) => {
+        setTweetImgUrl(url);
+        // console.log("hasil :", tweetImgUrl);
+      });
+    });
   };
 
   const activatingImage = (e: any) => {
@@ -50,12 +69,23 @@ const Tweet = ({ session }: any) => {
   const onEmojiClick = (e: any) => {
     setTweetText(tweetText + e.native);
   };
+  const closeClick = (e: any) => {
+    setTweetImgPreview("");
+    const desertRef = ref(storage, `tweet/${tweetImg.name}`);
+    deleteObject(desertRef)
+      .then(() => {
+        console.log("success delet img");
+      })
+      .catch((error: any) => {
+        console.log("error delet img");
+      });
+  };
 
   return (
-    <form className="hidden w-[100%] mt-28 border-b border-gray-500 sm:flex p-5">
-      <div className=" w-12 h-12 bg-slate-200 rounded-full mr-5">
+    <form className=" w-[100%] mt-28 border-b border-gray-500 sm:flex p-5">
+      <div className=" w-12 h-12 bg-slate-200 rounded-full mr-5 mb-5 sm:mb-0">
         <Image
-          src={session?.user?.image}
+          src={session?.session?.user?.image}
           alt=""
           width={100}
           height={100}
@@ -63,9 +93,9 @@ const Tweet = ({ session }: any) => {
         />
       </div>
       <div className=" flex-1 bg-slte-100">
-        <div className="flex flex-col items-start space-y-5 border-b border-gray-500 pb-5">
+        <div className="flex flex-col items-start space-y-5 border-b border-gray-500 pb-5 text-sm sm:text-base">
           <button
-            className=" text-blue-500 border border-blue-500 py-1 px-5 rounded-full text-sm"
+            className=" text-blue-500 border border-blue-500 py-1 px-5 rounded-full text-xs sm:text-sm"
             disabled={true}
           >
             Everyone
@@ -77,15 +107,20 @@ const Tweet = ({ session }: any) => {
             value={tweetText}
             onChange={(e) => setTweetText(e.target.value)}
           />
-          {tweetImg && (
-            <div className="w-[500px] h-[500px] relative bg-slae-100">
+          {tweetImgPreview && (
+            <div className="w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] relative bg-slae-100">
               <button
-                onClick={() => setTweetImg("")}
+                onClick={closeClick}
                 className=" bg-[#07070784] hover:bg-[#07070767] duration-300 absolute rounded-full z-20 right-5 top-5 p-2"
               >
                 <AiOutlineClose className=" fill-white  w-5 h-5 " />
               </button>
-              <Image src={tweetImg} alt="" fill className="rounded-xl z-10" />
+              <Image
+                src={tweetImgPreview}
+                alt=""
+                fill
+                className="rounded-xl z-10"
+              />
             </div>
           )}
           <button className="text-blue-500 font-bold" disabled={true}>
@@ -151,14 +186,16 @@ const Tweet = ({ session }: any) => {
               />
             </button>
           </div>
-          <button
-            disabled={tweetText === "" && tweetImg === ""}
-            type="button"
-            onClick={post}
-            className=" bg-[#3986f9] hover:bg-[#226ad7] duration-300 px-5 py-2 rounded-full font-bold disabled:opacity-50"
-          >
-            Post
-          </button>
+          <Link href={"/"}>
+            <button
+              disabled={tweetText === "" && tweetImgPreview === ""}
+              type="button"
+              onClick={post}
+              className=" bg-[#3986f9] hover:bg-[#226ad7] duration-300 px-5 py-2 rounded-full font-bold disabled:opacity-50"
+            >
+              Post
+            </button>
+          </Link>
         </div>
       </div>
     </form>
