@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import { AiOutlineClose } from "react-icons/ai";
@@ -17,10 +17,21 @@ import {
 const Tweet = (session: any, setSubmit: any) => {
   const [tweetText, setTweetText] = useState("");
   const [emojiActive, setEmojiActive] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(true);
   const [tweetImg, setTweetImg] = useState<any>();
   const [tweetImgUrl, setTweetImgUrl] = useState("");
   const [tweetImgPreview, setTweetImgPreview] = useState<string>();
   const inputImg = useRef<HTMLInputElement>(null);
+
+  const disableButton = () => {
+    if (tweetText === "" && tweetImgPreview === "") {
+      setIsDisabled(true);
+    } else {
+      setTimeout(() => {
+        setIsDisabled(false);
+      }, 5000);
+    }
+  };
 
   const post = async () => {
     try {
@@ -43,17 +54,22 @@ const Tweet = (session: any, setSubmit: any) => {
   };
 
   // console.log(tweetImg.name);
-  const onImageChange = (e: any) => {
+  const onImageChange = async (e: any) => {
+    disableButton();
     const [file] = e.target.files;
     setTweetImg(e.target.files[0]);
     setTweetImgPreview(URL.createObjectURL(file));
     const imageRef = ref(storage, `tweet/${e.target.files[0].name}`);
-    uploadBytes(imageRef, e.target.files[0]).then((snapshot) => {
+    await uploadBytes(imageRef, e.target.files[0]).then((snapshot) => {
       getDownloadURL(snapshot.ref).then((url) => {
         setTweetImgUrl(url);
         // console.log("hasil :", tweetImgUrl);
       });
     });
+  };
+  const onTextChange = async (e: any) => {
+    setTweetText(e.target.value);
+    disableButton();
   };
 
   const activatingImage = (e: any) => {
@@ -105,7 +121,7 @@ const Tweet = (session: any, setSubmit: any) => {
             placeholder="what is happening?!"
             className=" bg-transparent text-2xl outline-none w-[100%] break-words max-w-[570px]"
             value={tweetText}
-            onChange={(e) => setTweetText(e.target.value)}
+            onChange={onTextChange}
           />
           {tweetImgPreview && (
             <div className="w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] relative bg-slae-100">
@@ -188,7 +204,7 @@ const Tweet = (session: any, setSubmit: any) => {
           </div>
           <Link href={"/"}>
             <button
-              disabled={tweetText === "" && tweetImgPreview === ""}
+              disabled={isDisabled}
               type="button"
               onClick={post}
               className=" bg-[#3986f9] hover:bg-[#226ad7] duration-300 px-5 py-2 rounded-full font-bold disabled:opacity-50"
